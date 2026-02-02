@@ -6,6 +6,7 @@ import pandas as pd
 from src.analytics.features import FeatureEngine,compute_features
 from src.data.database import get_session, init_database 
 from src.data.models import PriceDaily, Instrument 
+from src.analytics.signals import MomentumSignal, RSISignal, MACDSignal, SignalCombiner, momentum_signal, rsi_signal, macd_signal
 
 init_database()
 
@@ -36,9 +37,17 @@ with get_session() as session:
     print(feature_cols)
     print(features_df.shape)
     print(features_df[feature_cols].tail(20))
-    print(features_df[feature_cols].describe())
-    print(features_df[feature_cols].info())
+    #print(features_df[feature_cols].describe())
+   # print(features_df[feature_cols].info())
     print(features_df[feature_cols].isnull().sum())
     print(features_df[feature_cols].isnull().sum().sum())
     print(features_df[feature_cols].isnull().sum().sum() / features_df[feature_cols].size)
-    print(features_df[feature_cols].isnull().sum().sum() / features_df[feature_cols].size)
+
+    print('=' * 50)
+    print("Testing Signal Generation")
+    print(sum(momentum_signal(features_df)))
+    print(sum(rsi_signal(features_df)))
+    print(sum(macd_signal(features_df)))
+    print(sum( SignalCombiner(signals={'momentum': MomentumSignal(window=21), 
+                                    'rsi': RSISignal(oversold=30, overbought=70), 
+                                    'macd': MACDSignal()}).generate(features_df)))
