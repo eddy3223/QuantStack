@@ -95,9 +95,13 @@ class ETLPipeline:
         except Exception as e:
             print(f"Unexpected error processing all symbols: {e}")
             stats['symbols_failed'] += 1
-            self._complete_job_log(job_log.id, 'FAILED', 0, 0, str(e)) 
+            self._complete_job_log(job_log.id, 'FAILED', 0, 0, str(e))
+            stats['status'] = 'FAILED'
+            stats['error_message'] = str(e)
             raise
 
+        stats['status'] = 'SUCCESS'
+        stats['completed_at'] = datetime.now()
         return stats
 
     def _process_symbol(
