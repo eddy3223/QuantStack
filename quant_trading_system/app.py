@@ -11,7 +11,7 @@ from src.analytics.signals import SignalCombiner, MomentumSignal, RSISignal, MAC
 from src.trading.backtest import BacktestEngine, run_backtest, plot_backtest_results
 from datetime import datetime, timedelta, date
 import traceback
-from tests.test_backtest import load_multi_asset_prices, build_signals_for_symbol
+from src.trading.backtest_helpers import load_multi_asset_prices, build_signals_for_symbol
 import pandas as pd
 
 init_database()

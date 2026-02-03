@@ -113,6 +113,25 @@ You should see printed metrics (total return, Sharpe, max drawdown, win rate) an
 
 ---
 
+### 3a. Run the Streamlit app (UI)
+
+A Streamlit UI lets you load data, run backtests, and view results in the browser.
+
+**Start the app** (from the `quant_trading_system` directory):
+
+```bash
+cd quant_trading_system
+poetry run streamlit run app.py
+```
+
+A browser tab will open. Use the sidebar to switch pages:
+
+- **Data** — List instruments in the database; load new data (symbols, days); select a symbol and view a price chart. Load stats are shown after a run and the list refreshes.
+- **Backtest** — Select symbols, date range, and engine parameters (capital, volatility target, costs, etc.). Click **Run Backtest** to run the backtest; metrics (total return, Sharpe, max drawdown, win rate) appear below. The result is stored for the Analytics page.
+- **Analytics** — View the **last** backtest result: the same metrics, plus portfolio equity curve, drawdown chart, and per-asset equity. If no backtest has been run yet, the page shows a short message; run one from the Backtest page first.
+
+---
+
 ### 4. Run tests (unit/integration)
 
 ```bash
@@ -152,6 +171,7 @@ Then run any data or backtest commands as above. If you use SQLite, omit `DATABA
 ```
 quant_trading_system/
 ├── README.md           # This file
+├── app.py              # Streamlit UI (Data, Backtest, Analytics pages)
 ├── pyproject.toml      # Dependencies and project config
 ├── data/               # SQLite DB file (created by ETL)
 ├── scripts/
@@ -167,7 +187,8 @@ quant_trading_system/
 │   │   ├── features.py    # FeatureEngine (returns, vol, MA, RSI, MACD, …)
 │   │   └── signals.py     # Momentum, RSI, MACD, SignalCombiner
 │   └── trading/
-│       └── backtest.py    # BacktestEngine, BacktestResult, plotting
+│       ├── backtest.py        # BacktestEngine, BacktestResult, plotting
+│       └── backtest_helpers.py # load_multi_asset_prices, build_signals_for_symbol
 └── tests/
     ├── test_db.py
     ├── test_source.py
