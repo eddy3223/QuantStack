@@ -4,6 +4,22 @@ A systematic trading data pipeline and backtesting platform. It covers ETL from 
 
 ---
 
+## Quick start
+
+From the project root (repository root, not `quant_trading_system`):
+
+```bash
+cd quant_trading_system
+poetry install
+mkdir -p data
+poetry run python scripts/cli.py data load AAPL MSFT --days 365
+poetry run streamlit run app.py
+```
+
+Then in the browser: open **Backtest**, click **Run Backtest**, then open **Analytics** to see metrics and charts. Total time: under 2 minutes.
+
+---
+
 ## Architecture
 
 ```
@@ -36,7 +52,14 @@ A systematic trading data pipeline and backtesting platform. It covers ETL from 
 
 - **Data:** Normalized DB (instruments, daily prices, ETL job log). ETL is idempotent and logs per-symbol status.
 - **Analytics:** Returns, volatility, moving averages, RSI, MACD, Bollinger, ATR; signals in {-1, 0, +1}.
-- **Trading:** Backtest uses previous-day signals, supports transaction costs and optional vol targeting.
+- **Trading:** Backtest uses previous-day signals, supports transaction costs and optional vol targeting. Risk/diagnostics (drawdown duration, turnover, report) live in `DiagnosticEngine`.
+
+### Design notes
+
+- **DataSource abstraction** — All market data goes through a common interface (YFinance, FRED, Stub). That keeps ETL and DB schema vendor-agnostic and makes it easy to add sources or test with synthetic data.
+- **Vectorized backtest** — The engine runs on full price/signal DataFrames with no lookahead (signals are shifted so position at t uses signal from t−1). This keeps the implementation simple and fast.
+- **Idempotent ETL** — Loads skip existing (symbol, date) pairs and log per-symbol success/failure. Re-running the same load is safe and makes debugging and incremental updates straightforward.
+- **SQLite by default** — Chosen for zero-config and portability. For production you’d typically use PostgreSQL (or similar) with connection pooling; the code path is the same, only `DATABASE_URL` changes.
 
 ---
 
@@ -128,7 +151,9 @@ A browser tab will open. Use the sidebar to switch pages:
 
 - **Data** — List instruments in the database; load new data (symbols, days); select a symbol and view a price chart. Load stats are shown after a run and the list refreshes.
 - **Backtest** — Select symbols, date range, and engine parameters (capital, volatility target, costs, etc.). Click **Run Backtest** to run the backtest; metrics (total return, Sharpe, max drawdown, win rate) appear below. The result is stored for the Analytics page.
-- **Analytics** — View the **last** backtest result: the same metrics, plus portfolio equity curve, drawdown chart, and per-asset equity. If no backtest has been run yet, the page shows a short message; run one from the Backtest page first.
+- **Analytics** — View the **last** backtest result: the same metrics, plus portfolio equity curve, drawdown chart, and per-asset equity. Expand **Risk & diagnostics report** for drawdown duration, turnover, and a full diagnostics dict. If no backtest has been run yet, run one from the Backtest page first.
+
+**From repo root:** `poetry run streamlit run quant_trading_system/app.py` (run from the directory that contains `quant_trading_system`).
 
 ---
 
@@ -180,43 +205,24 @@ quant_trading_system/
 │   ├── data/           # Data layer
 │   │   ├── models.py       # DB models (Instrument, PriceDaily, DataLoadLog, …)
 │   │   ├── database.py     # Engine, session, init_database
-│   │   ├── sources/        # Data source adapters (YFinance, base)
-│   │   └── etl/
-│   │       └── pipeline.py # ETL pipeline
-│   ├── analytics/
-│   │   ├── features.py    # FeatureEngine (returns, vol, MA, RSI, MACD, …)
-│   │   └── signals.py     # Momentum, RSI, MACD, SignalCombiner
-│   └── trading/
-│       ├── backtest.py        # BacktestEngine, BacktestResult, plotting
-│       └── backtest_helpers.py # load_multi_asset_prices, build_signals_for_symbol
-└── tests/
-    ├── test_db.py
-    ├── test_source.py
-    ├── test_pipeline.py
-    ├── test_features.py
-    └── test_backtest.py   # Multi-asset backtest + plots
-```
-
----
-
-## Configuration
-
-| Item | Default | Override |
-|------|--------|----------|
-| Database | `sqlite:///./data/quant_data.db` | Set `DATABASE_URL` |
-| ETL cache / paths | In project `data/` | N/A |
-
-### FRED API key (optional)
-
-The FRED data source needs an API key. To set one up:
-
-1. **Create a free account** at [FRED account](https://fredaccount.stlouisfed.org) (St. Louis Fed).
+u[]
 2. **Request an API key** at [FRED API keys](https://fredaccount.stlouisfed.org/apikeys) (while logged in).
 3. **Set the key** in your environment or in a `.env` file:
    - **Environment:** `set FRED_API_KEY=your_key_here` (Windows) or `export FRED_API_KEY=your_key_here` (Linux/macOS).
    - **`.env`:** Copy `.env.example` to `.env` and add `FRED_API_KEY=your_key_here`. Load it with `python-dotenv` if your app supports it.
 
 YFinance and the Stub source work without any API key. Optional trading/execution features may use `.env` for other keys (e.g. Alpaca).
+
+---
+
+## Production considerations
+
+For a production deployment you would typically add:
+
+- **Schema migrations** — e.g. Alembic (or similar) so DB changes are versioned and repeatable.
+- **ETL robustness** — Retries with backoff and rate limiting for external APIs (YFinance, FRED); optional dead-letter handling for failed symbols.
+- **Secrets** — No API keys in repo; use env vars or a secret manager; rotate keys if they were ever committed.
+- **Streamlit** — If the UI is exposed, add auth and consider running behind a reverse proxy; for internal use, headless run is often enough.
 
 ---
 
