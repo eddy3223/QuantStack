@@ -185,7 +185,17 @@ quant_trading_system/
 | Database | `sqlite:///./data/quant_data.db` | Set `DATABASE_URL` |
 | ETL cache / paths | In project `data/` | N/A |
 
-No API keys are required for the data layer (YFinance is used without auth). Optional trading/execution features may use `.env` for keys (e.g. Alpaca).
+### FRED API key (optional)
+
+The FRED data source needs an API key. To set one up:
+
+1. **Create a free account** at [FRED account](https://fredaccount.stlouisfed.org) (St. Louis Fed).
+2. **Request an API key** at [FRED API keys](https://fredaccount.stlouisfed.org/apikeys) (while logged in).
+3. **Set the key** in your environment or in a `.env` file:
+   - **Environment:** `set FRED_API_KEY=your_key_here` (Windows) or `export FRED_API_KEY=your_key_here` (Linux/macOS).
+   - **`.env`:** Copy `.env.example` to `.env` and add `FRED_API_KEY=your_key_here`. Load it with `python-dotenv` if your app supports it.
+
+YFinance and the Stub source work without any API key. Optional trading/execution features may use `.env` for other keys (e.g. Alpaca).
 
 ---
 

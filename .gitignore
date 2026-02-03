@@ -1,0 +1,38 @@
+# Environment and secrets – do not commit
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+
+# Virtual environments
+.venv/
+venv/
+.env/
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Project-specific
+quant_trading_system/data/*.db
+*.log

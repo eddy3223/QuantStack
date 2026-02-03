@@ -100,7 +100,7 @@ class DataSource(ABC):
         required_cols = ["date", "open", "high", "low", "close", "volume"]
         for col in required_cols:
             if col not in df.columns:
-                raise DataSourceError(f"Missing required column: {col}")
+                raise DataSource_error(f"Missing required column: {col}")
 
         #remove nulls
         price_cols = ["open", "high", "low", "close"]
