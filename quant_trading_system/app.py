@@ -9,6 +9,7 @@ from src.data.etl.pipeline import ETLPipeline
 from src.analytics.features import FeatureEngine
 from src.analytics.signals import SignalCombiner, MomentumSignal, RSISignal, MACDSignal
 from src.trading.backtest import BacktestEngine, run_backtest, plot_backtest_results
+from src.trading.diagnostics import DiagnosticEngine
 from datetime import datetime, timedelta, date
 import traceback
 from src.trading.backtest_helpers import load_multi_asset_prices, build_signals_for_symbol
@@ -160,6 +161,9 @@ elif page == "Analytics":
     if result is None:
         st.info("Run a backtest on the Backtest page first.")
     else:
+        diag = DiagnosticEngine(result)
+        report = diag.report()
+
         st.subheader("Metrics")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -171,6 +175,16 @@ elif page == "Analytics":
         with col4:
             st.metric("Win rate", f"{result.win_rate:.2%}")
         st.caption(f"Period: {result.start_date} to {result.end_date} | Trading days: {len(result.equity)} | Trades: {len(result.trades)}")
+
+        with st.expander("Risk & diagnostics report"):
+            pct_keys = ("total_return", "annualized_return", "max_drawdown", "win_rate")
+            for key, value in report.items():
+                if hasattr(value, "strftime"):
+                    st.write(f"**{key}**: {value}")
+                elif key in pct_keys and isinstance(value, (int, float)):
+                    st.write(f"**{key}**: {value:.2%}")
+                else:
+                    st.write(f"**{key}**: {value}")
 
         st.subheader("Portfolio equity")
         st.line_chart(result.equity.to_frame("equity"))
